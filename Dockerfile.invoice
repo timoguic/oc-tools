@@ -1,0 +1,11 @@
+FROM python:3.9-buster
+
+RUN useradd -m -d /app app
+COPY --chown=app ./requirements.txt /app/requirements.txt
+USER app
+RUN pip install --user -r /app/requirements.txt
+
+COPY --chown=app openclassrooms/ /app/openclassrooms
+
+WORKDIR /app
+ENTRYPOINT ["python", "-m", "openclassrooms.invoice"]
