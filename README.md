@@ -36,3 +36,5 @@ Typical usage: `python -m openclassrooms.invoice > report.html` (in a crontab).
 Use an env file to store your credentials (see `oc.env`).
 
 Then: `docker run --rm --env-file oc.env timoguic/oc-tools:invoice > report.html`
+
+Build your own: `docker build -f Dockerfile.invoice .`
