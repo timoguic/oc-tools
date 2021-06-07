@@ -27,6 +27,10 @@ class Student:
         return cls._students.get(student_id)
 
     def update_financed_status(self, connector):
+        """Loads the student dashboard and updates their financed status
+
+        Meant to be run in thread / thread pool
+        """
         student_url = STUDENT_URL.format(self.student_id)
         resp = connector.get(student_url)
         tree = etree.parse(StringIO(resp.text), etree.HTMLParser())
