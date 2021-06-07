@@ -12,6 +12,7 @@ class Session:
     session_date: datetime
     level: int
     status: str
+    soutenance: bool
     student: Student
 
     @property
@@ -25,7 +26,8 @@ class Session:
         """
         price = 25 + 5 * self.level
 
-        if not self.student.financed:
+        # Soutenances are all the same price
+        if not self.student.financed and not self.soutenance:
             price = price / 2
 
         if "absent" in self.status:
@@ -55,7 +57,7 @@ class SessionManager:
     def month(self):
         return self.sessions[0].session_date.month
 
-    def filter(self, level=None, financed=None, noshow=None, no_charge=None):
+    def filter(self, level=None, financed=None, noshow=None, no_charge=None, soutenance=False):
         sessions = self.sessions
         if level:
             sessions = [s for s in sessions if s.level == level]
@@ -70,6 +72,11 @@ class SessionManager:
 
         if no_charge is True:
             sessions = [s for s in sessions if s.price == 0]
+
+        if soutenance is True:
+            sessions = [s for s in sessions if s.soutenance]
+        else:
+            sessions = [s for s in sessions if not s.soutenance]
 
         return sessions
 

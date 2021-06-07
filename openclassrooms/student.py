@@ -32,7 +32,9 @@ class Student:
         Meant to be run in thread / thread pool
         """
         student_url = STUDENT_URL.format(self.student_id)
+
         resp = connector.get(student_url)
+
         tree = etree.parse(StringIO(resp.text), etree.HTMLParser())
 
         xpath = tree.xpath("//div[contains(@class, 'mentorshipStudent__details')]/p")

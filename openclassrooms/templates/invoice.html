@@ -35,16 +35,18 @@
         % for sess in session_list:
         <tr>
             <td>
-                ${ sess.session_date.strftime("%a %d %b %Y @ %H:%M") }
+                ${f"{sess.session_date:%a %d %b %Y @ %H:%M}"}
             </td>
             <td>
-                ${ sess.student.name }
+                <a href="https://openclassrooms.com/fr/mentorship/students/${sess.student.student_id}/dashboard">
+                    ${sess.student.name}
+                </a>
             </td>
             <td>
-                ${ sess.level }
+                ${sess.level}
             </td>
             <td>
-                ${ sess.price }
+                ${f"{sess.price:.2f}"}
             </td>
         </tr>
         % endfor
@@ -69,7 +71,7 @@
 
                     total = total + subtotal
                 %>
-                <h4 class="text-right">SUBTOTAL: ${ num_sessions } x ${ unit_price } = ${ subtotal }</h4>
+                <h4 class="text-right">SUBTOTAL: ${num_sessions} x ${f"{unit_price:.2f}"} = ${f"{subtotal:.2f}"}</h4>
                 <hr>
             % endif
         % endfor
@@ -77,17 +79,20 @@
             <h2>AF BONUS</h2>
             <ul>
                 % for student in af_students:
-                <li>${ student.name }</li>
+                <li>${student.name}</li>
                 % endfor
             </ul>
             <% subtotal = len(af_students) * 30 %>
-            <h4 class="text-right">SUBTOTAL: ${ len(af_students) } x 30 = ${ subtotal }</h4>
+            <h4 class="text-right">SUBTOTAL: ${len(af_students)} x 30 = ${f"{subtotal:.2f}"}</h4>
             <% total = total + subtotal %>
             <hr>
         %endif
-        <h1 class="text-right">TOTAL: ${ total }</h1>
+        <h1 class="text-right">TOTAL: ${f"{total:.2f}"}</h1>
         <hr>
         ${ make_table("No charge", no_charge) }
+        <footer>
+            Generated in ${f"{duration:.2f}"}s.
+        </footer>
     </div>
     <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>

@@ -87,7 +87,8 @@ class OcAdapter:
 
                     level = int(session['projectLevel'])
                     status = session['status']
-                    manager.add(session_date, level, status, student)
+                    soutenance = session['type'] == "presentation"
+                    manager.add(session_date, level, status, soutenance, student)
 
         self.done.set()
         return manager

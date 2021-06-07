@@ -68,10 +68,22 @@ class Invoice:
                         "level": level,
                         "financed": financed,
                         "noshow": noshow,
+                        "soutenance": False,
                     }
                     label = f"NIVEAU {level} / {label_f} {label_noshow}"
                     sessions = self.manager.filter(**filters)
                     output[label] = sessions
+
+            for noshow in False, True:
+                label_noshow = ("", "noshow")[noshow]
+                filters = {
+                    "level": level,
+                    "noshow": noshow,
+                    "soutenance": True,
+                }
+                label = f"SOUTENANCES NIVEAU {level} {label_noshow}"
+                sessions = self.manager.filter(**filters)
+                output[label] = sessions
 
         return output
 
@@ -83,7 +95,8 @@ class Invoice:
             month=self.manager.month,
             sessions=self._get_filtered_sessions(),
             af_students={s.student for s in self.manager.filter(financed=False)},
-            no_charge=[s for s in self.manager.filter(no_charge=True)]
+            no_charge=[s for s in self.manager.filter(no_charge=True)],
+            duration=self.duration,
         )
 
         return html
