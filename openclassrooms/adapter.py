@@ -1,15 +1,11 @@
 import concurrent.futures
 import logging
 from datetime import datetime, timedelta
-from functools import lru_cache
-from io import StringIO
 from queue import Queue
 from threading import Event, Thread
 
-from lxml import etree
-
 from .connector import OcConnector
-from .constants import API_BASE_URL, STUDENT_URL
+from .constants import API_BASE_URL
 from .session import SessionManager
 from .student import Student
 

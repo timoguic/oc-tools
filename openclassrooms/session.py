@@ -37,12 +37,6 @@ class Session:
 
         return price
 
-    def __lt__(self, other):
-        if type(other) is not type(self):
-            raise TypeError("Invalid type")
-
-        return self.session_date < other.session_date
-
     def __str__(self):
         return f"{self.student.name: <30} | {self.session_date:%Y-%m-%d %H:%M} | {self.level} | {self.status}"
 
@@ -57,7 +51,9 @@ class SessionManager:
     def month(self):
         return self.sessions[0].session_date.month
 
-    def filter(self, level=None, financed=None, noshow=None, no_charge=None, soutenance=False):
+    def filter(
+        self, level=None, financed=None, noshow=None, no_charge=None, soutenance=False
+    ):
         sessions = self.sessions
         if level:
             sessions = [s for s in sessions if s.level == level]

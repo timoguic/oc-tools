@@ -1,9 +1,10 @@
-import time
 import argparse
 import logging
+import time
 from datetime import datetime
-from mako.template import Template
 from pathlib import Path
+
+from mako.template import Template
 
 from .adapter import OcAdapter
 from .helpers import get_username_password
@@ -153,6 +154,7 @@ def print_invoice(month=None, html=True):
     invoice = Invoice(manager, end - start)
 
     invoice.print(html=html)
+
 
 LOG_FORMAT = "%(levelname)s:%(module)s [%(threadName)s]: %(msg)s"
 

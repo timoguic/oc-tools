@@ -51,5 +51,9 @@ class Student:
         return self.financed
 
     def __str__(self):
-        status = ("AF", "F")[self.financed]
+        if type(self.financed) is bool:
+            status = ("AF", "F")[self.financed]
+        else:
+            status = "unknown"
+
         return f"{self.name} ({status})"
