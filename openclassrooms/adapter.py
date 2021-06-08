@@ -49,9 +49,10 @@ class OcAdapter:
             max_workers=5, thread_name_prefix='students'
         ) as executor:
             logger.info("Starting thread pool for students...")
-            while not self.done.is_set() or not student_queue.empty():
-                student = student_queue.get()
-                executor.submit(student.update_financed_status, self.connector)
+            while not self.done.is_set():
+                if not student_queue.empty():
+                    student = student_queue.get()
+                    executor.submit(student.update_financed_status, self.connector)
 
         session_thread.join()
         logger.info("Sessions thread terminated.")
