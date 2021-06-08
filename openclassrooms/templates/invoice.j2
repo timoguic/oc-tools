@@ -1,0 +1,56 @@
+
+{% macro make_html_table(label, session_list) %}
+<h2>{{ label }}</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Date
+            </th>
+            <th>
+                Name
+            </th>
+            <th>
+                Level
+            </th>
+            <th>
+                Price
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sess in session_list %}
+        <tr>
+            <td>
+                {{ sess.session_date|nice_date }}
+            </td>
+            <td>
+                <a href="https://openclassrooms.com/fr/mentorship/students/{{sess.student.student_id}}/dashboard">
+                    {{ sess.student.name }}
+                </a>
+            </td>
+            <td>
+                {{ sess.level }}
+            </td>
+            <td>
+                {{ sess.price | round2dec }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endmacro %}
+
+
+{% macro make_text_table(label, session_list) %}
+{{separator}}
+## {{label}}
+{{separator}}
+
+{% for sess in session_list %}
+{{sess.session_date|nice_date}} | {{'%-25s'|format(sess.student.name)}} | {{sess.level}} | {{sess.price|round2dec}}
+{% endfor %}
+{% endmacro %}
+
+{% set separator %}-----------------------------------------------------------------{% endset %}
+{% set total = namespace(value=0) %}

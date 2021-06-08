@@ -1,0 +1,32 @@
+{% from "invoice.j2" import make_text_table as make_table, separator, total %}
+
+# OpenClassrooms -- Invoice / month ${month}
+
+{% for label, session_list in sessions.items() %}
+    {% if session_list|length %}
+{{ make_table(label, session_list) }}
+        {% set subtotal = session_list | sum(attribute="price") %}
+        {% set total.value = total.value + subtotal %}
+-- SUBTOTAL: {{ session_list|length }} x {{ session_list.0.price|round2dec }} = {{ subtotal|round2dec }}
+
+    {% endif %}
+{% endfor %}
+
+{{separator}}
+{% if af_students|length %}
+    ## AF BONUS
+    {% for student in af_students %}
+ > {{student.name}}
+    {% endfor %}
+    {% set subtotal = af_students|length * 30 %}
+    {% set total.value = total.value + subtotal %}
+-- SUBTOTAL: {{ af_students|length }} x 30 = {{ subtotal | round2dec }}
+{% endif %}
+
+{{separator}}
+== TOTAL: {{ total.value | round2dec }}
+{{separator}}
+
+{{ make_table("No charge", no_charge) }}
+
+{% include "footer.j2" %}

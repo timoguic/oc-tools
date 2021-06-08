@@ -1,3 +1,4 @@
+{% from "invoice.j2" import make_html_table as make_table, total %}
 <!DOCTYPE html>
 <html>
 
@@ -11,88 +12,34 @@
         }
     </style>
 </head>
-
-<%def name="make_table(label, session_list)">
-<h2>${ label }</h2>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                Date
-            </th>
-            <th>
-                Name
-            </th>
-            <th>
-                Level
-            </th>
-            <th>
-                Price
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-        % for sess in session_list:
-        <tr>
-            <td>
-                ${f"{sess.session_date:%a %d %b %Y @ %H:%M}"}
-            </td>
-            <td>
-                <a href="https://openclassrooms.com/fr/mentorship/students/${sess.student.student_id}/dashboard">
-                    ${sess.student.name}
-                </a>
-            </td>
-            <td>
-                ${sess.level}
-            </td>
-            <td>
-                ${f"{sess.price:.2f}"}
-            </td>
-        </tr>
-        % endfor
-    </tbody>
-</table>
-</%def>
-
 <body>
     <div class="container">
-        <h1>Invoice for month ${ month }</h1>
-        <%
-            total = 0
-        %>
-        % for label, session_list in sessions.items():
-            % if len(session_list):
-
-                ${ make_table(label, session_list) }
-                <%
-                    subtotal = sum([s.price for s in session_list])
-                    num_sessions = len(session_list)
-                    unit_price = session_list[0].price
-
-                    total = total + subtotal
-                %>
-                <h4 class="text-right">SUBTOTAL: ${num_sessions} x ${f"{unit_price:.2f}"} = ${f"{subtotal:.2f}"}</h4>
+        <h1>Invoice for month {{ month }}</h1>
+        {% for label, session_list in sessions.items() %}
+            {% if session_list|length %}
+                {{ make_table(label, session_list) }}
+                {% set subtotal = session_list | sum(attribute="price") %}
+                {% set total.value = total.value + subtotal %}
+                <h4 class="text-right">SUBTOTAL: {{ session_list|length }} x {{ session_list.0.price | round2dec }} = {{ subtotal | round2dec }}</h4>
                 <hr>
-            % endif
-        % endfor
-        % if len(af_students):
+            {% endif %}
+        {% endfor %}
+        {% if af_students | length %}
             <h2>AF BONUS</h2>
             <ul>
-                % for student in af_students:
-                <li>${student.name}</li>
-                % endfor
+                {% for student in af_students %}
+                <li>{{ student.name }}</li>
+                {% endfor %}
             </ul>
-            <% subtotal = len(af_students) * 30 %>
-            <h4 class="text-right">SUBTOTAL: ${len(af_students)} x 30 = ${f"{subtotal:.2f}"}</h4>
-            <% total = total + subtotal %>
+            {% set subtotal = af_students|length * 30 %}
+            <h4 class="text-right">SUBTOTAL: {{ af_students|length }} x 30 = {{ subtotal | round2dec }}</h4>
+            {% set total.value = total.value + subtotal %}
             <hr>
-        %endif
-        <h1 class="text-right">TOTAL: ${f"{total:.2f}"}</h1>
+        {% endif %}
+        <h1 class="text-right">TOTAL: {{ total.value | round2dec }}</h1>
         <hr>
-        ${ make_table("No charge", no_charge) }
-        <footer>
-            Generated in ${f"{duration:.2f}"}s.
-        </footer>
+        {{ make_table("No charge", no_charge) }}
+        <footer>{% include "footer.j2" %}</footer>
     </div>
     <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
