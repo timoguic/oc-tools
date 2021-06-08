@@ -72,7 +72,7 @@ class OcAdapter:
                 session_date = datetime.fromisoformat(session['sessionDate'][:-5])
                 before = min(before, session_date)
 
-                if session_date.month == after.month:
+                if session_date.month == after.month and session_date <= datetime.now():
                     student_id = session['recipient']['id']
 
                     student = Student.get_by_id(student_id)
