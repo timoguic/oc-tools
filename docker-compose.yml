@@ -4,3 +4,19 @@ services:
   report:
     image: timoguic/oc-tools:invoice
     env_file: oc.env
+  oc_report:
+    image: nginx
+    restart: always
+    volumes:
+      - ./html:/usr/share/nginx/html/billing
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.oc_report.rule=Host(`toto.com`) && PathPrefix(`/billing`)"
+      - "traefik.http.routers.oc_report.tls.certresolver=le_http"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external:
+      name: traefik

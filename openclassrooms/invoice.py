@@ -98,9 +98,6 @@ def print_invoice(month=None, html=True):
     start = time.time()
     adapter = OcAdapter(username, password)
     manager = adapter.get_sessions_for_month(month)
-    with open("manager.dat", "wb") as fp:
-        import pickle
-        pickle.dump(manager, fp)
     end = time.time()
 
     invoice = Invoice(manager, end - start)
