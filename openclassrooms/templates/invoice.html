@@ -10,6 +10,10 @@
 <body>
     <div class="container">
         <a href="prev.html">Previous month</a>
+        {% if to_complete %}
+        <h1>Sessions to complete</h1>
+        {{ make_table("", to_complete) }}
+        {% endif %}
         <h1>Invoice for month {{ month }}</h1>
         {% for label, session_list in sessions.items() %}
             {% if session_list|length %}

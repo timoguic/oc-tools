@@ -13,16 +13,31 @@ logger = logging.getLogger(__name__)
 
 
 class OcAdapter:
-    def __init__(self, username, password):
+    def __init__(self, username, password, persistent_students=False):
         self.connector = OcConnector(username, password)
+        self.manager = SessionManager(persistent_students)
 
-    def _get_sessions(self, before):
-        api_url = f"{API_BASE_URL}/users/{self.connector.user_id}/sessions"
-        params = {"actor": "expert", "before": before.strftime('%Y-%m-%dT%H:%M:%SZ')}
+    def _get_sessions(self, params=None):
+        if params is None:
+            params = {}
 
-        data = self.connector.get(api_url, params=params).json()
+        # Default value
+        params["actor"] ="expert"
 
-        return data
+        if not params.get("life-cycle-status"):
+            params["life-cycle-status"] = ",".join(
+                ["canceled", "completed", "late canceled", "marked student as absent", "pending"]
+            )
+
+        # Add a before date if we don't have one
+        if not params.get("before"):
+            params["before"] = datetime.now()
+
+        # Convert the date to the API format
+        params["before"] = params["before"].strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        sessions_url = f"{API_BASE_URL}/users/{self.connector.user_id}/sessions"
+        return self.connector.get(sessions_url, params=params).json()
 
     def get_sessions_for_month(self, month):
         now = datetime.now()
@@ -33,12 +48,11 @@ class OcAdapter:
         after = datetime(now.year, month, 1, 0, 0)
         before = after + timedelta(32)
 
-        manager = SessionManager()
         self.done = Event()
         student_queue = Queue()
         session_thread = Thread(
             target=self._get_sessions_between,
-            args=(before, after, student_queue, manager),
+            args=(before, after, student_queue, self.manager),
             name="sessions",
         )
 
@@ -57,7 +71,19 @@ class OcAdapter:
         session_thread.join()
         logger.info("Sessions thread terminated.")
 
-        return manager
+        self.manager.student_manager.save()
+
+    def _process_session(self, session):
+        """Take the JSON session information and returns a dictionary"""
+        return {
+            # We remove the +0000 at the end of the date
+            "session_date": datetime.fromisoformat(session['sessionDate'][:-5]),
+            "student_id": session['recipient']['id'],
+            "student_name": session['recipient']['displayableName'],
+            "level": int(session['projectLevel']),
+            "status": session['status'],
+            "soutenance": session['type'] == "presentation",
+        }
 
     def _get_sessions_between(self, before, after, queue, manager):
         """Gets the sessions, and posts to the queue
@@ -65,27 +91,26 @@ class OcAdapter:
         Meant to be used in a thread. The queue is filled up with students that
         need updating (financed status)
         """
+
+        pending = self._get_sessions(params={"life-cycle-status": "pending", "before": datetime.now() + timedelta(1)})
+        for session in pending:
+            data = self._process_session(session)
+            manager.add(**data)
+
+
         while before > after:
-            sessions = self._get_sessions(before)
+            sessions = self._get_sessions(params={"before": before})
             for session in sessions:
-                # We remove the +0000 at the end of the date
-                session_date = datetime.fromisoformat(session['sessionDate'][:-5])
+                data = self._process_session(session)
+                session_date = data["session_date"]
                 before = min(before, session_date)
 
                 if session_date.month == after.month and session_date <= datetime.now():
-                    student_id = session['recipient']['id']
-
-                    student = Student.get_by_id(student_id)
-                    if not student:
-                        student_name = session['recipient']['displayableName']
-                        student = Student(student_id, student_name)
-                        # Hopefully the other thread will pick it up :)
+                    # Add the session to the manager
+                    student = manager.add(**data)
+                    # If the student is not "updated", add it to the queue for updating
+                    if student is not None:
                         queue.put(student)
-
-                    level = int(session['projectLevel'])
-                    status = session['status']
-                    soutenance = session['type'] == "presentation"
-                    manager.add(session_date, level, status, soutenance, student)
 
         self.done.set()
         return manager

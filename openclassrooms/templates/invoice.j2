@@ -42,9 +42,11 @@
 
 
 {% macro make_text_table(label, session_list) %}
+{% if label|length %}
 {{separator}}
 ## {{label}}
 {{separator}}
+{% endif %}
 
 {% for sess in session_list %}
 {{sess.session_date|nice_date}} | {{'%-25s'|format(sess.student.name)}} | {{sess.level}} | {{sess.price|round2dec}}

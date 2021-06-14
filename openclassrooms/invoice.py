@@ -18,18 +18,19 @@ class Invoice:
     HTML_TEMPLATE = "invoice.html"
     TEXT_TEMPLATE = "invoice.txt"
 
-    def __init__(self, manager, duration):
-        self.manager = manager
-        self.month = manager.month
+    def __init__(self, adapter, duration):
+        self.manager = adapter.manager
+        self.month = adapter.manager.month
         self.duration = duration
 
     @property
     def data(self):
         data = {
             "month": self.month,
-            "sessions": self._get_filtered_sessions(),
-            "af_students": self._get_af_students(),
+            "sessions": self.filtered_sessions,
+            "af_students": self.af_students,
             "no_charge": self.manager.filter(no_charge=True),
+            "to_complete": self.manager.filter(pending=True),
             "duration": self.duration,
             "now": datetime.now(),
         }
@@ -51,10 +52,12 @@ class Invoice:
         tpl = env.get_template(template_file)
         return tpl.render(**self.data)
 
-    def _get_af_students(self):
+    @property
+    def af_students(self):
         return {sess.student for sess in self.manager.filter(financed=False)}
 
-    def _get_filtered_sessions(self):
+    @property
+    def filtered_sessions(self):
         output = {}
 
         # OC levels
@@ -96,11 +99,11 @@ def print_invoice(month=None, html=True):
     username, password = get_username_password()
 
     start = time.time()
-    adapter = OcAdapter(username, password)
-    manager = adapter.get_sessions_for_month(month)
+    adapter = OcAdapter(username, password, persistent_students=True)
+    adapter.get_sessions_for_month(month)
     end = time.time()
 
-    invoice = Invoice(manager, end - start)
+    invoice = Invoice(adapter, end - start)
 
     invoice.print(html=html)
 

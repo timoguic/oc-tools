@@ -1,6 +1,11 @@
 {% from "invoice.j2" import make_text_table as make_table, separator, total %}
 
-# OpenClassrooms -- Invoice / month ${month}
+{% if to_complete %}
+# Sessions to complete
+{{ make_table("", to_complete) }}
+{% endif %}
+
+# OpenClassrooms -- Invoice / month {{month}}
 
 {% for label, session_list in sessions.items() %}
     {% if session_list|length %}

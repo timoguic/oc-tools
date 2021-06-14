@@ -120,7 +120,8 @@ class OcConnector:
         return True
 
     def get(self, url, *args, **kwargs):
-        logger.info(f"-> Accessing {url}")
+        params_str = ",".join([f"{k}={v}" for k, v in kwargs.get("params", {}).items()])
+        logger.info(f"-> Accessing {url} ({params_str})")
         return self.session.get(url, *args, **kwargs)
 
     def post(self, *args, **kwargs):
