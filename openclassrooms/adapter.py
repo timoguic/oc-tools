@@ -48,7 +48,8 @@ class OcAdapter:
         params["before"] = params["before"].strftime("%Y-%m-%dT%H:%M:%SZ")
 
         sessions_url = f"{API_BASE_URL}/users/{self.connector.user_id}/sessions"
-        return self.connector.get(sessions_url, params=params).json()
+        data = self.connector.get(sessions_url, params=params).json()
+        return data
 
     def get_sessions_for_month(self, month):
         now = _now()

@@ -21,7 +21,7 @@
         {% for sess in session_list %}
         <tr>
             <td>
-                {{ sess.session_date|nice_date }}
+                <a href="{{ sess.url }}">{{ sess.session_date|nice_date }}</a>
             </td>
             <td>
                 <a href="https://openclassrooms.com/fr/mentorship/students/{{sess.student.student_id}}/dashboard">

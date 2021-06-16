@@ -2,6 +2,8 @@ import operator
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
+
+from .constants import SESSION_URL
 from .student import Student, StudentManager
 
 
@@ -9,6 +11,7 @@ from .student import Student, StudentManager
 class Session:
     """An OC session, with a date, level, status, and student"""
 
+    session_id: int
     session_date: datetime
     level: int
     status: str
@@ -61,6 +64,10 @@ class Session:
     def local_date(self):
         """Return local date"""
         return self.session_date.replace(tzinfo=timezone.utc).astimezone(tz=None)
+
+    @property
+    def url(self):
+        return SESSION_URL.format(self.session_id)
 
     def __str__(self):
         return f"{self.student.name: <30} | {self.session_date:%Y-%m-%d %H:%M} | {self.level} | {self.status}"
@@ -122,6 +129,7 @@ class SessionManager:
         session_id = kwargs["session_id"]
 
         session_args = {
+            "session_id": session_id,
             "session_date": kwargs["session_date"],
             "level": kwargs["level"],
             "status": kwargs["status"],

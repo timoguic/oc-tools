@@ -1,6 +1,6 @@
 import json
 import logging
-
+from io import BytesIO
 from lxml import etree
 
 from .constants import STUDENT_URL
@@ -21,16 +21,17 @@ class Student:
 
         Meant to be run in thread / thread pool
         """
+
         if self.financed is not None:
             return
 
         student_url = STUDENT_URL.format(self.student_id)
 
         resp = connector.get(student_url)
-
-        tree = etree.parse(resp.content, etree.HTMLParser())
+        tree = etree.parse(BytesIO(resp.content), etree.HTMLParser())
 
         xpath = tree.xpath("//div[contains(@class, 'mentorshipStudent__details')]/p")
+
         if not len(xpath):
             raise RuntimeError(f"Cannot parse student page: {student_url}")
 
@@ -39,6 +40,8 @@ class Student:
             self.financed = False
         else:
             self.financed = True
+
+        print(self.financed)
 
         logger.info(f"Updated {self.name} (financed: {self.financed}).")
         return self.financed
@@ -70,11 +73,10 @@ class StudentManager:
         try:
             with open("students.json", "r") as fp:
                 students_dicts = json.load(fp)
+                for student_data in students_dicts:
+                    self.get_or_create(**student_data)
         except FileNotFoundError:
             pass
-
-        for student_data in students_dicts:
-            self.get_or_create(**student_data)
 
     def get_or_create(self, student_id, **kwargs):
         student = self.students.get(student_id)
@@ -87,7 +89,6 @@ class StudentManager:
 
         student = Student(student_id, **kwargs)
         self.students[student_id] = student
-        self.save()
 
         return student
 

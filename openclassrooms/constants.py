@@ -5,6 +5,7 @@ TOKEN_URL = BASE_URL + "/login_check"
 LOGIN_URL = BASE_URL + "/login"
 DASHBOARD_URL = BASE_URL + "/fr/mentorship/dashboard"
 STUDENT_URL = BASE_URL + "/fr/mentorship/students/{}/dashboard"
+SESSION_URL = BASE_URL + "/fr/mentorship/sessions/{}"
 
 # API URLs
 API_BASE_URL = "https://api.openclassrooms.com"
