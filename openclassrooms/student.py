@@ -1,6 +1,5 @@
-import logging
-from io import StringIO
 import json
+import logging
 
 from lxml import etree
 
@@ -10,8 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class Student:
-    """Holds information about students
-    """
+    """Holds information about students"""
 
     def __init__(self, student_id, name, financed=None):
         self.student_id = student_id
@@ -30,7 +28,7 @@ class Student:
 
         resp = connector.get(student_url)
 
-        tree = etree.parse(StringIO(resp.text), etree.HTMLParser())
+        tree = etree.parse(resp.content, etree.HTMLParser())
 
         xpath = tree.xpath("//div[contains(@class, 'mentorshipStudent__details')]/p")
         if not len(xpath):
@@ -46,7 +44,11 @@ class Student:
         return self.financed
 
     def json(self):
-        return {"student_id": self.student_id, "name": self.name, "financed": self.financed}
+        return {
+            "student_id": self.student_id,
+            "name": self.name,
+            "financed": self.financed,
+        }
 
     def __str__(self):
         if type(self.financed) is bool:
@@ -56,19 +58,23 @@ class Student:
 
         return f"{self.name} ({status})"
 
+
 class StudentManager:
     def __init__(self, persistent=False):
         self.students = {}
         self.persistent = persistent
 
-        if persistent:
-            try:
-                with open("students.json", "r") as fp:
-                    students_dicts = json.load(fp)
-                    for student_data in students_dicts:
-                        self.get_or_create(**student_data)
-            except FileNotFoundError:
-                pass
+        if not persistent:
+            return
+
+        try:
+            with open("students.json", "r") as fp:
+                students_dicts = json.load(fp)
+        except FileNotFoundError:
+            pass
+
+        for student_data in students_dicts:
+            self.get_or_create(**student_data)
 
     def get_or_create(self, student_id, **kwargs):
         student = self.students.get(student_id)

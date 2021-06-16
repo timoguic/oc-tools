@@ -49,7 +49,7 @@
 {% endif %}
 
 {% for sess in session_list %}
-{{sess.session_date|nice_date}} | {{'%-25s'|format(sess.student.name)}} | {{sess.level}} | {{sess.price|round2dec}}
+{{sess.local_date|nice_date}} | {{'%-25s'|format(sess.student.name)}} | {{sess.level}} | {{sess.price|round2dec}}
 {% endfor %}
 {% endmacro %}
 

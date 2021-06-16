@@ -1,6 +1,6 @@
 import operator
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .student import Student, StudentManager
 
@@ -40,7 +40,7 @@ class Session:
     @property
     def no_charge(self):
         return self.price == 0
-    
+
     @property
     def financed(self):
         return self.student.financed
@@ -52,10 +52,15 @@ class Session:
     @property
     def completed(self):
         return "completed" in self.status.lower()
-    
+
     @property
     def pending(self):
         return "pending" in self.status.lower()
+
+    @property
+    def local_date(self):
+        """Return local date"""
+        return self.session_date.replace(tzinfo=timezone.utc).astimezone(tz=None)
 
     def __str__(self):
         return f"{self.student.name: <30} | {self.session_date:%Y-%m-%d %H:%M} | {self.level} | {self.status}"
@@ -65,17 +70,28 @@ class SessionManager:
     """This manager makes it easier to filter/search for sessions"""
 
     def __init__(self, persistent_students):
-        self.sessions = list()
+        self.sessions = dict()
         self.student_manager = StudentManager(persistent_students)
 
     @property
     def month(self):
-        return self.sessions[0].session_date.month
+        if not len(self.sessions):
+            raise RuntimeError("Not implemented?")
+
+        first_item = next(iter(self.sessions.values()))
+        return first_item.session_date.month
 
     def filter(
-        self, level=None, financed=None, noshow=None, no_charge=None, pending=None, soutenance=False
+        self,
+        level=None,
+        financed=None,
+        noshow=None,
+        no_charge=None,
+        pending=None,
+        soutenance=False,
     ):
-        sessions = self.sessions
+        sessions = self.sessions.values()
+
         if level:
             sessions = [s for s in sessions if s.level == level]
 
@@ -98,10 +114,12 @@ class SessionManager:
         else:
             sessions = [s for s in sessions if not s.soutenance]
 
-        return sessions
+        return sorted(sessions, key=operator.attrgetter("session_date"))
 
     def add(self, **kwargs):
         """Add a session to the list, and keep the list sorted"""
+
+        session_id = kwargs["session_id"]
 
         session_args = {
             "session_date": kwargs["session_date"],
@@ -118,8 +136,7 @@ class SessionManager:
             session_args["student"] = student
 
         session = Session(**session_args)
-        self.sessions.append(session)
-        self.sessions.sort(key=operator.attrgetter("session_date"))
+        self.sessions[session_id] = session
 
         if session_args["student"].financed is None:
             return session_args["student"]

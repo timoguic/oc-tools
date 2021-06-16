@@ -1,15 +1,20 @@
 import concurrent.futures
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from queue import Queue
 from threading import Event, Thread
+
+import dateutil.parser
 
 from .connector import OcConnector
 from .constants import API_BASE_URL
 from .session import SessionManager
-from .student import Student
 
 logger = logging.getLogger(__name__)
+
+
+def _now():
+    return datetime.now(timezone.utc)
 
 
 class OcAdapter:
@@ -22,30 +27,36 @@ class OcAdapter:
             params = {}
 
         # Default value
-        params["actor"] ="expert"
+        params["actor"] = "expert"
 
         if not params.get("life-cycle-status"):
             params["life-cycle-status"] = ",".join(
-                ["canceled", "completed", "late canceled", "marked student as absent", "pending"]
+                [
+                    "canceled",
+                    "completed",
+                    "late canceled",
+                    "marked student as absent",
+                    "pending",
+                ]
             )
 
         # Add a before date if we don't have one
         if not params.get("before"):
-            params["before"] = datetime.now()
+            params["before"] = _now()
 
         # Convert the date to the API format
-        params["before"] = params["before"].strftime('%Y-%m-%dT%H:%M:%SZ')
+        params["before"] = params["before"].strftime("%Y-%m-%dT%H:%M:%SZ")
 
         sessions_url = f"{API_BASE_URL}/users/{self.connector.user_id}/sessions"
         return self.connector.get(sessions_url, params=params).json()
 
     def get_sessions_for_month(self, month):
-        now = datetime.now()
+        now = _now()
 
         if not month:
-            month = datetime.now().month
+            month = now.month
 
-        after = datetime(now.year, month, 1, 0, 0)
+        after = datetime(now.year, month, 1, 0, 0, tzinfo=timezone.utc)
         before = after + timedelta(32)
 
         self.done = Event()
@@ -60,7 +71,7 @@ class OcAdapter:
         session_thread.start()
 
         with concurrent.futures.ThreadPoolExecutor(
-            max_workers=5, thread_name_prefix='students'
+            max_workers=5, thread_name_prefix="students"
         ) as executor:
             logger.info("Starting thread pool for students...")
             while not self.done.is_set():
@@ -76,13 +87,14 @@ class OcAdapter:
     def _process_session(self, session):
         """Take the JSON session information and returns a dictionary"""
         return {
+            "session_id": session["id"],
             # We remove the +0000 at the end of the date
-            "session_date": datetime.fromisoformat(session['sessionDate'][:-5]),
-            "student_id": session['recipient']['id'],
-            "student_name": session['recipient']['displayableName'],
-            "level": int(session['projectLevel']),
-            "status": session['status'],
-            "soutenance": session['type'] == "presentation",
+            "session_date": dateutil.parser.parse(session["sessionDate"]),
+            "student_id": session["recipient"]["id"],
+            "student_name": session["recipient"]["displayableName"],
+            "level": int(session["projectLevel"]),
+            "status": session["status"],
+            "soutenance": session["type"] == "presentation",
         }
 
     def _get_sessions_between(self, before, after, queue, manager):
@@ -92,12 +104,6 @@ class OcAdapter:
         need updating (financed status)
         """
 
-        pending = self._get_sessions(params={"life-cycle-status": "pending", "before": datetime.now() + timedelta(1)})
-        for session in pending:
-            data = self._process_session(session)
-            manager.add(**data)
-
-
         while before > after:
             sessions = self._get_sessions(params={"before": before})
             for session in sessions:
@@ -105,7 +111,7 @@ class OcAdapter:
                 session_date = data["session_date"]
                 before = min(before, session_date)
 
-                if session_date.month == after.month and session_date <= datetime.now():
+                if session_date.month == after.month and session_date <= _now():
                     # Add the session to the manager
                     student = manager.add(**data)
                     # If the student is not "updated", add it to the queue for updating

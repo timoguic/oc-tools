@@ -9,6 +9,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from .adapter import OcAdapter
 from .helpers import get_username_password
 
+
 class Invoice:
     """Format data to prepare the invoice
 
@@ -107,9 +108,11 @@ def print_invoice(month=None, html=True):
 
     invoice.print(html=html)
 
+
 def demo_invoice(html=True):
     start = time.time()
     import pickle
+
     with open("manager.dat", "rb") as fp:
         manager = pickle.load(fp)
     end = time.time()
@@ -122,15 +125,15 @@ def demo_invoice(html=True):
 LOG_FORMAT = "%(levelname)s:%(module)s [%(threadName)s]: %(msg)s"
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Creates an OC invoice')
+    parser = argparse.ArgumentParser(description="Creates an OC invoice")
 
     parser.add_argument(
-        'month_number', metavar='N', type=int, nargs='?', help='the month number'
+        "month_number", metavar="N", type=int, nargs="?", help="the month number"
     )
 
-    parser.add_argument('--debug', action="store_true")
-    parser.add_argument('--text', action="store_true", default=False)
-    parser.add_argument('--demo', action="store_true", default=False)
+    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--text", action="store_true", default=False)
+    parser.add_argument("--demo", action="store_true", default=False)
 
     args = parser.parse_args()
 
@@ -139,6 +142,7 @@ if __name__ == "__main__":
     if args.demo:
         demo_invoice(not args.text)
         import sys
+
         sys.exit(0)
 
     try:
