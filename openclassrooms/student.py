@@ -41,8 +41,6 @@ class Student:
         else:
             self.financed = True
 
-        print(self.financed)
-
         logger.info(f"Updated {self.name} (financed: {self.financed}).")
         return self.financed
 
