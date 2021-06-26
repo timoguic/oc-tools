@@ -87,13 +87,17 @@ class OcAdapter:
 
     def _process_session(self, session):
         """Take the JSON session information and returns a dictionary"""
+
+        project_level = session["projectLevel"]
+        project_level = int(session["projectLevel"]) if project_level is not None else 0
+
         return {
             "session_id": session["id"],
             # We remove the +0000 at the end of the date
             "session_date": dateutil.parser.parse(session["sessionDate"]),
             "student_id": session["recipient"]["id"],
             "student_name": session["recipient"]["displayableName"],
-            "level": int(session["projectLevel"]),
+            "level": project_level,
             "status": session["status"],
             "soutenance": session["type"] == "presentation",
         }
